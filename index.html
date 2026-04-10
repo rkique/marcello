@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marcello — Museum Tracker</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Stats Bar -->
+  <header id="stats-bar">
+    <div class="stats-left">
+      <h1 class="logo">Marcello</h1>
+    </div>
+    <div class="stats-center">
+      <div class="stat">
+        <span class="stat-value" id="stat-visited">0</span>
+        <span class="stat-label">Visited</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="stat-countries">0</span>
+        <span class="stat-label">Countries</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="stat-continents">0</span>
+        <span class="stat-label">Continents</span>
+      </div>
+    </div>
+    <div class="stats-right">
+      <button id="toggle-sidebar" class="icon-btn" aria-label="Toggle sidebar">☰</button>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="open">
+    <div class="sidebar-header">
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search museums..." autocomplete="off" />
+      </div>
+      <div class="filters">
+        <select id="filter-continent">
+          <option value="">All Regions</option>
+          <option value="North America">North America</option>
+          <option value="Europe">Europe</option>
+          <option value="Asia">Asia</option>
+          <option value="South America">South America</option>
+          <option value="Africa">Africa</option>
+          <option value="Oceania">Oceania</option>
+        </select>
+        <select id="filter-status">
+          <option value="">All</option>
+          <option value="visited">Visited</option>
+          <option value="unvisited">Unvisited</option>
+        </select>
+        <select id="filter-type">
+          <option value="">All Types</option>
+          <option value="Fine Art">Fine Art</option>
+          <option value="Modern Art">Modern Art</option>
+          <option value="Contemporary">Contemporary</option>
+          <option value="Encyclopedic">Encyclopedic</option>
+        </select>
+      </div>
+    </div>
+    <ul id="museum-list"></ul>
+  </aside>
+
+  <!-- Map -->
+  <div id="map"></div>
+
+  <!-- Museum Detail Modal -->
+  <div id="detail-modal" class="modal-overlay" hidden>
+    <div class="modal">
+      <button class="modal-close" aria-label="Close">&times;</button>
+      <div class="modal-body">
+        <h2 id="detail-name"></h2>
+        <p class="detail-location" id="detail-location"></p>
+        <span class="detail-type" id="detail-type"></span>
+        <p class="detail-desc" id="detail-desc"></p>
+        <a id="detail-website" class="detail-link" href="#" target="_blank" rel="noopener">Visit Website ↗</a>
+
+        <div id="detail-visit-info" hidden>
+          <hr />
+          <div class="visit-summary">
+            <div class="visit-rating" id="detail-rating"></div>
+            <span class="visit-date" id="detail-date"></span>
+            <span class="visit-fav" id="detail-fav" hidden>♥ Favorite</span>
+          </div>
+          <p class="visit-review" id="detail-review"></p>
+          <div class="visit-photos" id="detail-photos"></div>
+          <div class="visit-actions">
+            <button id="btn-edit-visit" class="btn btn-secondary">Edit Visit</button>
+            <button id="btn-delete-visit" class="btn btn-danger">Delete Visit</button>
+          </div>
+        </div>
+
+        <div id="detail-no-visit">
+          <hr />
+          <button id="btn-log-visit" class="btn btn-primary">Log Visit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log Visit Modal -->
+  <div id="visit-modal" class="modal-overlay" hidden>
+    <div class="modal">
+      <button class="modal-close" aria-label="Close">&times;</button>
+      <div class="modal-body">
+        <h2 id="visit-modal-title">Log Visit</h2>
+        <form id="visit-form">
+          <input type="hidden" id="visit-museum-id" />
+
+          <label>Rating</label>
+          <div class="star-rating" id="star-rating">
+            <span class="star" data-value="1">★</span>
+            <span class="star" data-value="2">★</span>
+            <span class="star" data-value="3">★</span>
+            <span class="star" data-value="4">★</span>
+            <span class="star" data-value="5">★</span>
+          </div>
+
+          <label for="visit-date-input">Date Visited</label>
+          <input type="date" id="visit-date-input" required />
+
+          <label for="visit-review-input">Review</label>
+          <textarea id="visit-review-input" rows="4" placeholder="Share your thoughts..."></textarea>
+
+          <label>Photos (max 5)</label>
+          <div class="photo-upload-area">
+            <input type="file" id="visit-photo-input" accept="image/*" multiple hidden />
+            <button type="button" id="btn-add-photos" class="btn btn-secondary">+ Add Photos</button>
+            <div id="photo-previews" class="photo-previews"></div>
+          </div>
+
+          <label class="fav-toggle">
+            <input type="checkbox" id="visit-favorite" />
+            <span>♥ Mark as Favorite</span>
+          </label>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-visit">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Visit</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="museums.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
